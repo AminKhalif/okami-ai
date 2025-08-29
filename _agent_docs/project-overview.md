@@ -9,7 +9,7 @@ A fun AI web application that transforms LinkedIn profiles into engaging anime/m
 - **AI Innovation**: Combines profile analysis with creative storytelling and image generation
 
 ## Target Audience
-- **Primary**: Young professionals (25-35) who enjoy anime/manga culture
+- **Primary**: Young professionals (18-35) who enjoy anime/manga culture
 - **Secondary**: Career coaches, recruiters, and social media enthusiasts
 - **Tertiary**: Anyone looking for creative ways to present their professional story
 
