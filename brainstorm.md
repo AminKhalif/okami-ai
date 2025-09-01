@@ -1,4 +1,4 @@
-A Manga Comic Panel consits of these things
+A Manga Comic Panel consists of these things
 
 Comic Panel:
 
