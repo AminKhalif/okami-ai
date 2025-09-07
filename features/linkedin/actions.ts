@@ -4,11 +4,11 @@
 
 'use server';
 
-import { scrapeLinkedInProfile } from './service';
+import { scrapeLinkedInProfile, getMockLinkedInProfile } from './service';
 import type { LinkedInProfile } from './types';
 
 /**
- * Server action to scrape LinkedIn profile data
+ * Server action to scrape LinkedIn profile data using the live API.
  * @param linkedinUrl - LinkedIn profile URL to scrape
  * @returns Promise resolving to LinkedIn profile data or error
  */
@@ -34,4 +34,30 @@ async function scrapeLinkedInProfileAction(linkedinUrl: string): Promise<{
   }
 }
 
-export { scrapeLinkedInProfileAction };
+/**
+ * Server action to get mock LinkedIn profile data for development.
+ * @returns Promise resolving to mock LinkedIn profile data or error
+ */
+async function getMockLinkedInProfileAction(): Promise<{
+  success: boolean;
+  data?: LinkedInProfile;
+  error?: string;
+}> {
+  try {
+    const profileData = await getMockLinkedInProfile();
+    
+    return {
+      success: true,
+      data: profileData
+    };
+  } catch (error) {
+    console.error('Mock LinkedIn action error:', error);
+    
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
+    };
+  }
+}
+
+export { scrapeLinkedInProfileAction, getMockLinkedInProfileAction };

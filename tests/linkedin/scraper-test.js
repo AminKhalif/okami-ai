@@ -21,7 +21,7 @@ console.log('Extracted linkId:', extractLinkId(testUrl));
  * Test ScrapingDog API call with the provided LinkedIn URL
  */
 async function testScrapingDog() {
-  const apiKey = '68b51a1de2834311438801b5';
+  const apiKey = '';
   const linkId = extractLinkId(testUrl);
   
   const params = new URLSearchParams({

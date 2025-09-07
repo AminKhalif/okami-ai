@@ -143,4 +143,12 @@ export { MangaPanel };
 - **MOCK** external API calls
 - **VALIDATE** error handling paths
 
+## Comment Guidelines
+- **REQUIRED**: JSDoc block format (`/** */`) for all functions and interfaces
+- **HELPFUL**: Brief comments explaining business logic or non-obvious decisions
+- **AVOID**: Line-by-line commenting of obvious code
+- **AVOID**: Restating what TypeScript types already make clear
+- **AVOID**: Excessive property descriptions in interfaces unless unclear
+- **BALANCE**: Make code understandable without comment clutter
+
 These rules ensure that any AI agent working on this codebase will produce consistent, high-quality, maintainable code that follows modern React and TypeScript best practices.

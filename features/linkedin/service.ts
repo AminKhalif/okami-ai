@@ -2,6 +2,8 @@
  * @fileoverview LinkedIn profile scraping service using ScrapingDog API
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
 import { LinkedInProfile, ScrapingDogLinkedInResponse } from './types';
 
 /**
@@ -50,6 +52,8 @@ function transformToLinkedInProfile(data: ScrapingDogLinkedInResponse, originalU
       company: exp.company_name || '',
       duration: exp.duration || `${exp.starts_at || ''} - ${exp.ends_at || ''}`.trim(),
       description: exp.summary || undefined,
+      location: exp.location || undefined,
+      companyUrl: exp.company_url || undefined,
     })),
     education: (data.education || []).map(edu => ({
       school: edu.school || '',
@@ -123,8 +127,36 @@ async function scrapeLinkedInProfile(url: string): Promise<LinkedInProfile> {
   return await scrapeProfileWithApi(url, apiKey);
 }
 
+/**
+ * Development-only mock function to get LinkedIn profile data from a local JSON file.
+ * This avoids using ScrapingDog API credits during development.
+ * @returns Promise resolving to mock LinkedIn profile data.
+ * @throws Error if the mock file cannot be read or parsed.
+ */
+async function getMockLinkedInProfile(): Promise<LinkedInProfile> {
+  try {
+    // Construct the absolute path to the mock JSON file
+    const mockFilePath = path.join(process.cwd(), 'tests', 'mock-data', 'linkedin-profile.json');
+    const mockFileContent = fs.readFileSync(mockFilePath, 'utf-8');
+
+    const jsonData: ScrapingDogLinkedInResponse[] = JSON.parse(mockFileContent);
+
+    if (!jsonData || jsonData.length === 0) {
+      throw new Error('No profile data found in mock file.');
+    }
+
+    // The original URL is not available in the mock data, so we use a placeholder
+    const originalUrl = 'https://www.linkedin.com/in/mock-profile/';
+    return transformToLinkedInProfile(jsonData[0], originalUrl);
+  } catch (error) {
+    console.error('Error getting mock LinkedIn profile:', error);
+    throw error;
+  }
+}
+
 export { 
   scrapeLinkedInProfile,
+  getMockLinkedInProfile,
   extractLinkId,
   isValidLinkedInUrl,
   transformToLinkedInProfile 
