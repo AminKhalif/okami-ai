@@ -5,20 +5,28 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Zap } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { toast } from "@/components/ui/use-toast";
+import { scrapeLinkedInProfileAction } from "@/features/linkedin/actions";
+import { generateStoryOutlineAction, generatePanelScriptsAction, generateMangaPanelImagesAction } from "@/features/story-generator/actions";
 
 export default function HomePage() {
   const [linkedinUrl, setLinkedinUrl] = useState("")
   const [isAnimating, setIsAnimating] = useState(false)
   const router = useRouter()
 
-  const handleGenerate = () => {
-    if (!linkedinUrl.trim()) return
+  const handleGenerate = async () => {
+    if (!linkedinUrl.trim()) {
+      toast({
+        title: "LinkedIn URL is required",
+        description: "Please enter a valid LinkedIn profile URL.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setIsAnimating(true)
-    setTimeout(() => {
-      router.push(`/process?url=${encodeURIComponent(linkedinUrl)}`)
-    }, 800)
-  }
+    // Redirect to processing page with LinkedIn URL
+    router.push(`/process?url=${encodeURIComponent(linkedinUrl)}`);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -40,6 +48,7 @@ export default function HomePage() {
                 className="flex-1 text-base py-4 border-2 border-black rounded-lg bg-white"
                 value={linkedinUrl}
                 onChange={(e) => setLinkedinUrl(e.target.value)}
+                disabled={isAnimating}
               />
               <Button
                 size="lg"

@@ -5,6 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Sparkles, Zap, Palette, BookOpen, Star, Moon, Sun } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
+import { scrapeLinkedInProfileAction } from "@/features/linkedin/actions"
+import { generateStoryOutlineAction, generatePanelScriptsAction, generateMangaPanelImagesAction } from "@/features/story-generator/actions"
 
 const processingSteps = [
   { id: "analysis", title: "Profile Analysis", desc: "Analyzing your professional journey", icon: Zap, duration: 2000 },
@@ -36,32 +39,92 @@ export default function ProcessPage() {
   const linkedinUrl = searchParams.get("url")
 
   useEffect(() => {
-    let totalTime = 0
-    const stepTimers: NodeJS.Timeout[] = []
+    if (!linkedinUrl) {
+      router.push('/')
+      return
+    }
 
-    processingSteps.forEach((step, index) => {
-      totalTime += step.duration
-      const timer = setTimeout(() => {
-        setCurrentStep(index + 1)
-        setProgress(((index + 1) / processingSteps.length) * 100)
-      }, totalTime)
-      stepTimers.push(timer)
-    })
-
-    const finalTimer = setTimeout(() => {
-      router.push("/results")
-    }, totalTime + 1000)
-
+    // Start fact rotation
     const factTimer = setInterval(() => {
       setCurrentFact((prev) => (prev + 1) % funFacts.length)
     }, 3000)
 
+    // Start actual processing pipeline
+    runProcessingPipeline(linkedinUrl)
+
     return () => {
-      stepTimers.forEach(clearTimeout)
-      clearTimeout(finalTimer)
       clearInterval(factTimer)
     }
-  }, [router])
+  }, [router, linkedinUrl])
+
+  const runProcessingPipeline = async (url: string) => {
+    try {
+      // Step 1: Profile Analysis
+      setCurrentStep(1)
+      setProgress(25)
+
+      const scrapeResult = await scrapeLinkedInProfileAction(url)
+      if (!scrapeResult.success || !scrapeResult.data) {
+        throw new Error(scrapeResult.error || 'Failed to scrape LinkedIn profile')
+      }
+
+      // Step 2: Story Crafting  
+      setCurrentStep(2)
+      setProgress(50)
+
+      const storyOutlineResult = await generateStoryOutlineAction({ 
+        panelCount: 8, 
+        profileData: scrapeResult.data 
+      })
+      
+      if (!storyOutlineResult.success || !storyOutlineResult.data) {
+        throw new Error(storyOutlineResult.error || 'Failed to generate story outline')
+      }
+
+      const panelScriptsResult = await generatePanelScriptsAction({ 
+        storyOutline: storyOutlineResult.data, 
+        profileData: scrapeResult.data 
+      })
+      
+      if (!panelScriptsResult.success || !panelScriptsResult.data) {
+        throw new Error(panelScriptsResult.error || 'Failed to generate panel scripts')
+      }
+
+      // Step 3: Art Generation
+      setCurrentStep(3)
+      setProgress(75)
+
+      const imageGenerationResult = await generateMangaPanelImagesAction({ 
+        panelScripts: panelScriptsResult.data, 
+        profileData: scrapeResult.data 
+      })
+      
+      if (!imageGenerationResult.success || !imageGenerationResult.data) {
+        throw new Error(imageGenerationResult.error || 'Failed to generate manga images')
+      }
+
+      // Step 4: Final Assembly
+      setCurrentStep(4)
+      setProgress(100)
+
+      // Brief pause for final assembly
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      // Redirect to results with panel scripts
+      router.push(`/results?panelScripts=${encodeURIComponent(JSON.stringify(panelScriptsResult.data))}`)
+
+    } catch (error) {
+      console.error('Processing pipeline error:', error)
+      toast({
+        title: "Generation Failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      })
+      
+      // Redirect back to home after error
+      setTimeout(() => router.push('/'), 3000)
+    }
+  }
 
   return (
     <div className="min-h-screen mystical-gradient overflow-hidden">

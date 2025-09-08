@@ -1,45 +1,42 @@
+/**
+ * @fileoverview Results page displaying generated manga story with actual panel scripts and images
+ */
+
 "use client"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Download, Share2, RefreshCw, Heart, Star } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 
-// Mock story data - in real app this would come from AI generation
-const mockStory = {
-  title: "The Legend of the Code Warrior",
-  character: "Alex the Developer",
-  panels: [
-    {
-      title: "The Ordinary World",
-      text: "In a bustling city, Alex worked as a junior developer, dreaming of greater adventures in the tech realm...",
-      image: "/anime-character-at-computer-in-office.png",
-    },
-    {
-      title: "The Call to Adventure",
-      text: "A mysterious startup appeared, seeking a hero to build revolutionary software that could change the world!",
-      image: "/anime-character-receiving-glowing-message.png",
-    },
-    {
-      title: "Meeting the Mentor",
-      text: "The wise Senior Architect appeared, sharing ancient knowledge of clean code and system design...",
-      image: "/wise-anime-mentor-teaching-young-developer.png",
-    },
-    {
-      title: "The Ordeal",
-      text: "Facing the dreaded Production Bug Dragon, Alex must use all their skills to save the system!",
-      image: "/anime-hero-fighting-digital-dragon-monster.png",
-    },
-    {
-      title: "The Reward",
-      text: "Victorious! Alex emerges as a Senior Developer, ready to mentor the next generation of code warriors!",
-      image: "/triumphant-anime-hero-with-glowing-sword.png",
-    },
-  ],
+interface PanelScript {
+  panelNumber: number;
+  caption: string;
+  storyDescription: string;
+  imagePrompt: string;
+}
+
+interface PanelScripts {
+  panels: PanelScript[];
 }
 
 export default function ResultsPage() {
   const [likedPanels, setLikedPanels] = useState<number[]>([])
+  const [panelScripts, setPanelScripts] = useState<PanelScript[]>([])
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const panelScriptsParam = searchParams.get('panelScripts')
+    if (panelScriptsParam) {
+      try {
+        const parsed: PanelScripts = JSON.parse(decodeURIComponent(panelScriptsParam))
+        setPanelScripts(parsed.panels || [])
+      } catch (error) {
+        console.error('Error parsing panel scripts:', error)
+      }
+    }
+  }, [searchParams])
 
   const toggleLike = (index: number) => {
     setLikedPanels((prev) => (prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]))
@@ -74,11 +71,11 @@ export default function ResultsPage() {
           </Badge>
 
           <h1 className="text-5xl font-bold mb-4 text-card-foreground" style={{ fontFamily: "var(--font-manrope)" }}>
-            {mockStory.title}
+            Your LinkedIn Manga Story
           </h1>
 
           <p className="text-xl text-muted-foreground mb-8">
-            Starring: <span className="text-primary font-semibold">{mockStory.character}</span>
+            {panelScripts.length > 0 ? `${panelScripts.length} panels generated` : 'Loading your story...'}
           </p>
 
           <div className="flex flex-wrap justify-center gap-4 mb-8">
@@ -106,54 +103,73 @@ export default function ResultsPage() {
         </div>
 
         <div className="space-y-12">
-          {mockStory.panels.map((panel, index) => (
-            <div
-              key={index}
-              className="okami-card p-6 animate-fade-in-up hover:scale-[1.01] transition-all duration-300"
-              style={{ animationDelay: `${index * 0.2}s` }}
-            >
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                <div className={`${index % 2 === 1 ? "md:order-2" : ""}`}>
-                  <div className="okami-card overflow-hidden">
-                    <img
-                      src={panel.image || "/placeholder.svg"}
-                      alt={panel.title}
-                      className="w-full h-64 object-cover"
-                    />
+          {panelScripts.length > 0 ? (
+            panelScripts.map((panel, index) => (
+              <div
+                key={panel.panelNumber}
+                className="okami-card p-6 animate-fade-in-up hover:scale-[1.01] transition-all duration-300"
+                style={{ animationDelay: `${index * 0.2}s` }}
+              >
+                <div className="grid md:grid-cols-2 gap-8 items-center">
+                  <div className={`${index % 2 === 1 ? "md:order-2" : ""}`}>
+                    <div className="bg-white border-2 border-black rounded-lg p-4 shadow-lg">
+                      <img
+                        src={`/generated/manga-panel-${panel.panelNumber}.png`}
+                        alt={`Panel ${panel.panelNumber}`}
+                        className="w-full max-w-md mx-auto h-auto object-contain rounded"
+                        style={{ maxHeight: '400px', aspectRatio: 'auto' }}
+                        onError={(e) => {
+                          e.currentTarget.src = "/placeholder.svg"
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className={`${index % 2 === 1 ? "md:order-1" : ""}`}>
-                  <div className="space-y-4">
-                    <Badge variant="outline" className="border-primary text-primary">
-                      Chapter {index + 1}
-                    </Badge>
-                    <h3
-                      className="text-2xl font-bold text-card-foreground"
-                      style={{ fontFamily: "var(--font-manrope)" }}
-                    >
-                      {panel.title}
-                    </h3>
-                    <p className="text-lg leading-relaxed text-muted-foreground">{panel.text}</p>
+                  <div className={`${index % 2 === 1 ? "md:order-1" : ""}`}>
+                    <div className="space-y-4">
+                      <Badge variant="outline" className="border-primary text-primary">
+                        Panel {panel.panelNumber}
+                      </Badge>
+                      <h3
+                        className="text-2xl font-bold text-card-foreground"
+                        style={{ fontFamily: "var(--font-manrope)" }}
+                      >
+                        {panel.caption}
+                      </h3>
+                      <p className="text-lg leading-relaxed text-muted-foreground">
+                        {panel.storyDescription}
+                      </p>
 
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleLike(index)}
-                      className={`transition-all duration-300 ${
-                        likedPanels.includes(index)
-                          ? "text-red-500 hover:text-red-600"
-                          : "text-muted-foreground hover:text-red-500"
-                      }`}
-                    >
-                      <Heart className={`w-5 h-5 mr-2 ${likedPanels.includes(index) ? "fill-current" : ""}`} />
-                      {likedPanels.includes(index) ? "Loved!" : "Love this panel"}
-                    </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleLike(index)}
+                        className={`transition-all duration-300 ${
+                          likedPanels.includes(index)
+                            ? "text-red-500 hover:text-red-600"
+                            : "text-muted-foreground hover:text-red-500"
+                        }`}
+                      >
+                        <Heart className={`w-5 h-5 mr-2 ${likedPanels.includes(index) ? "fill-current" : ""}`} />
+                        {likedPanels.includes(index) ? "Loved!" : "Love this panel"}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-lg text-muted-foreground">No story panels found. Please generate a story first.</p>
+              <Button 
+                size="lg" 
+                className="mt-4"
+                onClick={() => (window.location.href = "/")}
+              >
+                Go Back to Generate Story
+              </Button>
             </div>
-          ))}
+          )}
         </div>
 
         <div className="text-center mt-16 okami-card p-8 animate-fade-in-up" style={{ animationDelay: "1s" }}>

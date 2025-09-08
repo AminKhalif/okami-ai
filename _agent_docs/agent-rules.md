@@ -77,6 +77,47 @@ enum StoryPhases {
 - **USE** specific error types and messages
 - **IMPLEMENT** proper error boundaries in React
 - **LOG** errors with context for debugging
+- **NEVER** use console.log/console.error without proper error propagation
+- **ALWAYS** re-throw errors or call process.exit(1) in test scripts
+- **FAIL FAST** - don't continue execution after critical errors
+
+**Error Handling Patterns:**
+```typescript
+// ✅ Good - Service functions return error state
+async function serviceFunction(): Promise<{ success: boolean; data?: T; error?: string }> {
+  try {
+    const result = await riskyOperation();
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Service error:', error); // Log for debugging
+    return { success: false, error: 'Descriptive error message' }; // Return error state
+  }
+}
+
+// ✅ Good - Test scripts fail properly  
+async function testMain() {
+  try {
+    const result = await serviceFunction();
+    if (!result.success) {
+      throw new Error(`Test failed: ${result.error}`);
+    }
+    console.log('Test passed');
+  } catch (error) {
+    console.error('Test failed:', error);
+    process.exit(1); // Actually fail the test
+  }
+}
+
+// ❌ Bad - Silent failures
+async function badFunction() {
+  try {
+    await riskyOperation();
+  } catch (error) {
+    console.error('Something went wrong:', error); // Logs but continues!
+    // Missing: throw error; or proper error handling
+  }
+}
+```
 
 ### Code Organization
 - **FOLLOW** DRY principle - Don't Repeat Yourself

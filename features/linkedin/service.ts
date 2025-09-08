@@ -87,6 +87,9 @@ async function scrapeProfileWithApi(linkedinUrl: string, apiKey: string): Promis
   });
 
   try {
+    console.log('ScrapingDog API URL:', `${baseUrl}?${params}`);
+    console.log('Link ID extracted:', linkId);
+    
     const response = await fetch(`${baseUrl}?${params}`, {
       method: 'GET',
       headers: {
@@ -95,7 +98,9 @@ async function scrapeProfileWithApi(linkedinUrl: string, apiKey: string): Promis
     });
 
     if (!response.ok) {
-      throw new Error(`ScrapingDog API error: ${response.status} ${response.statusText}`);
+      const errorBody = await response.text();
+      console.log('ScrapingDog error response:', errorBody);
+      throw new Error(`ScrapingDog API error: ${response.status} ${response.statusText} - ${errorBody}`);
     }
 
     const data: ScrapingDogLinkedInResponse[] = await response.json();
